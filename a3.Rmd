@@ -23,14 +23,171 @@ For those worthy, the nobel prize bounty can be divided from two to three person
 ![Nobel Prize Logo](/Users/abigailchristinechen/data_visualization_2/Images/NobelPrizeMedal.png)
 ##Why are they called "Nobel Laureates"?
 
+![Nobel Laureate](/Users/abigailchristinechen/data_visualization_2/Images/NobelLaureate.jpg)
+
 Apparently, this stems from Greek Mythology, and a Greek god named Apollo. According to Wikipedia, Apollo is one of the most important and complex god in Greek mythology and he is recognized as a god of archery, music and dance, truth and prophecy, healing and diseases, the Sun and light, poetry, and more. Apollo wears a laurel wreath on his head, it's made of leaves and branches of the bay laurel turned into a circular crown. In Ancient Greece, this laurel wreath is given and awarded to the champions and victors of the athletic and literary competitions. 
+
 
 ##What will the Nobel Laureates receive once they are chosen? 
 
-![Nobel Laureate](/Users/abigailchristinechen/data_visualization_2/Images/NobelLaureate.jpg)
+![Nobel Diploma](/Users/abigailchristinechen/data_visualization_2/Images/NobelDiplomaSample.jpg)
 
 First they will get a Nobel Prize diploma, made especially for them.  They will get unique artworks created by the best Swedish and Norweigian artists and calligraphers. All handmade and fully customized. Second they will get a Nobel Prize Medal handmade with 18 carat recycled gold.  This medal has the portrait of Alfred Nobel, and his lifetime years. Third, they will be getting the Nobel Prize document indicating the amount they will get.
 
 The aim of this project is to create a visualization about Nobel Prize Winners and their different publications.  This project will be using RstudIO.  The Dataset can be found in **TidyTuesday's Github**(https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-05-14). 
 
-##Setting up the environment
+#Setting up the environment
+
+##Libraries  
+```{r setup, include=TRUE}
+library(extrafont)
+library(data.table)
+library(tidytuesdayR)
+library(lubridate)
+library(ggplot2)
+#library(hrbrthemes)
+library(dplyr)
+library(tidyverse)
+library(scales)
+library(readr)
+library(igraph)
+library(ggraph)
+library(snakecase)
+library(tm)
+library(factoextra)
+library(rpubs)
+library(kableExtra)
+library(gganimate)
+library(tidytext)
+library(viridis)
+library(widyr)
+library(tidygraph)
+library(plotly)
+library(modelsummary)
+library(tidylo)
+```
+
+##Loading the Data
+```{r setup, include=TRUE}
+##Loading the data
+#Nobel Prize Winners
+nobel_winners <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-14/nobel_winners.csv")
+
+#Publications of the Nobel Prize Winners
+nobel_winner_all_pubs <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-14/nobel_winner_all_pubs.csv")
+```
+
+
+##Exploring the data
+
+Below is the list of the different variables, their class, and a short description found in the two data sets.
+
+For the Nobel Prize Winners, there are 969 rows and 18 columns. 
+```{r setup, include=TRUE}
+count_rows <- count(nobel_winners)
+count_cols <- ncol(nobel_winners)
+```
+
+1. **prize_year**: (double) Year that Nobel Prize was awarded.
+2. **category**: (character) Field of study/category.
+3. **prize**: (character) Prize Name.
+4. **motivation**: (character) Motivation of the award.
+5. **prize_share**: (character) Share eg 1 of 1, 1 of 2, 1 of 4, etc.
+6. **laureate_id**: (double) ID assigned to each winner.
+7. **laureate_type**: (character) Individual or organization.
+8. **full_name**: (character) Name of the winner.
+9. **birth_date**: (double) Birth date of winner.
+10. **birth_city**: (character) Birth city/state of winner.
+11. **birth_country**: (character) Birth country of winner.
+12. **gender**: (character) Binary gender of the winner.
+13. **organization_name**:	(character)	Organization name.
+14. **organization_city**:	(character)	Organization city.
+15. **organization_country**:	(character)	Organization country.
+16. **death_date**:	(double)	Death date of the winner (if dead).
+17. **death_city**:	(character)	Death city (if dead).
+18. **death_country**:	(character)	Death country (if dead)).
+
+For the Nobel Prize Publications, there are 93,394 rows and 11 columns. 
+```{r setup, include=TRUE}
+count_rows_win <- count(nobel_winner_all_pubs)
+count_cols_win <- ncol(nobel_winner_all_pubs)
+```
+
+19. **laureate_id**:	(double)	Assigned Laureate ID (doesn't match other dataset).
+20. **laureate_name**:	(country)	Abbreviated name.
+21. **prize_year**:	(double)	Prize year.
+22. **title**:	(character)	Title of paper.
+23. **pub_year**: (double) Publication year.
+24. **paper_id**: (double) Paper ID.
+25. **doi**:	(character) DOI of paper.
+26. **journal**:	(character) Journal paper published in.
+27. **affiliation**:	(character) Affiliation of the author.
+28. **is_prize_winning_paper**: (character) Is associated as the Nobel winning paper (yes or no).
+29. **category**: (character) Category/field of study.
+
+##Defining the theme
+
+```{r setup, include=TRUE}
+##Defining the theme
+
+theme_nobel <- function(){ 
+    font <- "Calibri"   #assign font family up front
+    
+    theme_bw() %+replace%    #replace elements we want to change
+    
+    theme(
+      
+      legend.position = "top",            #legend position
+      panel.background = element_blank(),  # panel background to NA
+      panel.border = element_blank(),              # setting panel border
+      
+      #grid elements
+      panel.grid.major = element_blank(),    #remove major gridlines
+      panel.grid.minor = element_blank(),    #remove minor gridlines
+      axis.ticks = element_blank(),          #remove axis ticks
+      
+      #plot elements
+      plot.title = element_text(             #title
+                   family = font,            #set font family
+                   size = 12L,               #set font size
+                   face = 'bold',            #bold typeface
+                   hjust = 0.5,              #left align
+                   vjust = 2),               #raise slightly
+      
+      plot.caption = element_text(           #caption
+                   family = font,            #font family
+                   size = 8,                 #font size
+                   hjust = 0.5),               #right align
+      
+      #axis elements
+      axis.text = element_text(              #axis text
+                   family = font,            #axis famuly
+                   size = 8),                #font size
+      
+      axis.title = element_text(             #axis titles
+                   family = font,            #font family
+                   size = 8),               #font size
+    )
+}
+```
+
+
+
+
+
+Data Cleaning
+Creating New Table
+Descriptive Summary
+Distributions
+Mian Tasks
+1- How have the production of Movies and TV shows changed across years?
+2- How has the average movie duration changed across the decades?
+3- How do movies duration change based on the target audience?
+4- How are the genres clustered?
+5- When did each countries’ content add to the Netflix?
+Conclusion
+Appendix
+References
+Introduction
+The aim of this project is to utilize Rstudio for data visualization purposes. Netflix titles from Tidy Tuesday is used for this project, which can be found here. In this project I will be exploring the Movies and TV shows in Netflix.
+
