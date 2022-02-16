@@ -1,0 +1,78 @@
+---
+title: "Nobel Prize Vizualization"
+author: "Abigail Chen"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+---   
+
+##Research Goal
+
+The aim of this project is to create a nice visualization about Nobel Prize Winners and their different publications.  This project will be using Rstudio.  The Dataset can be found in **TidyTuesday's Github**(https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-05-14). I hope you enjoy this. :) 
+
+##What is the Nobel Prize? 
+
+"On 27 November 1895, Alfred Nobel signed his last will and testament, giving the largest share of his fortune to a series of prizes in physics, chemistry, physiology or medicine, literature and peace – the Nobel Prizes. In 1968, Sveriges Riksbank (Sweden’s central bank) established The Sveriges Riksbank Prize in Economic Sciences in Memory of Alfred Nobel. Learn more about the Nobel Prize laureates here." - NobelPrize.org.  Alfred Nobel gave SEK 31 million of his own money, around SEK 1,7 billion now, for investments in "safe securities", where the income will be distributed to the future winners. Nobel Prize is created for those with the greatest benefit to mankind.  
+
+For those worthy, the nobel prize bounty can be divided from two to three persons. The Nobel Prize started around 1901 up til now, my data set will be exploring the 1901 winners and their publications up til 2016. There will be some years when the Nobel Prizes were not awarded due to the World War I (1914-1918) and II (1939-1945), and the prizes here will be reserved for the future awards.
+
+##### INCLUDE IMADE OF NOBEL PRIZE LOGO 
+
+##Why are they called "Nobel Laureates"?
+
+Apparently, this stems from Greek Mythology, and a Greek god named Apollo. According to Wikipedia, Apollo is one of the most important and complex god in Greek mythology and he is recognized as a god of archery, music and dance, truth and prophecy, healing and diseases, the Sun and light, poetry, and more. Apollo wears a laurel wreath on his head, it's made of leaves and branches of the bay laurel turned into a circular crown. In Ancient Greece, this laurel wreath is given and awarded to the champions and victors of the athletic and literary competitions. 
+ 
+##### INCLUDE IMADE OF APOLLO LAUREAL CROWN
+
+##What will the Nobel Laureates receive once they are chosen? 
+
+First they will get a Nobel Prize diploma, made especially for them.  They will get unique artworks created by the best Swedish and Norweigian artists and calligraphers. All handmade and fully customized. Second they will get a Nobel Prize Medal handmade with 18 carat recycled gold.  This medal has the portrait of Alfred Nobel, and his lifetime years. Third, they will be getting the Nobel Prize document indicating the amount they will get.
+
+d Norwegian artists and calligraphers. The Nobel Prize medals are handmade with careful precision and in 18 carat recycled gold.
+
+
+The aim of this project is to create a visualization about Nobel Prize Winners and their different publications.  This project will be using RstudIO.  The Dataset can be found in **TidyTuesday's Github**(https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-05-14). 
+
+According to the Workplace Gender Equality Agency (WGEA), the gender pay gap measures the difference between the average earnings of women and men in the workforce. This is an internationally established measure of working women’s position in our  economy in comparison to working men. This project aims to explore the relationship between salary and gender based on the data from Glassdoor using regression analysis.  As well as looking at the relationship between, For pay we will be looking at the net income and the bonus pay. Additionally, other factors such as age, seniority, level of education of an individual will also be taken into account. 
+
+
+"The Nobel Prize is a set of annual international awards bestowed in several categories by Swedish and Norwegian institutions in recognition of academic, cultural, or scientific advances." - Wikipedia.
+
+
+utilize Rstudio for data visualization purposes. Netflix titles from Tidy Tuesday is used for this project, which can be found here. In this project I will be exploring the Movies and TV shows in Netflix.
+
+##Setting up the environment
+
+##Libraries  
+library()
+    
+##Loading the Data
+```{r setup, include=TRUE}
+##Loading the data
+nobel_winners <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-14/nobel_winners.csv")
+nobel_winner_all_pubs <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-14/nobel_winner_all_pubs.csv")
+```
+
+
+Introduction
+Setting up the Environement
+Loading Libraries
+Loading Data
+Defining the theme
+Data Cleaning
+Creating New Table
+Descriptive Summary
+Distributions
+Mian Tasks
+1- How have the production of Movies and TV shows changed across years?
+2- How has the average movie duration changed across the decades?
+3- How do movies duration change based on the target audience?
+4- How are the genres clustered?
+5- When did each countries’ content add to the Netflix?
+Conclusion
+Appendix
+References
+Introduction
+The aim of this project is to utilize Rstudio for data visualization purposes. Netflix titles from Tidy Tuesday is used for this project, which can be found here. In this project I will be exploring the Movies and TV shows in Netflix.
