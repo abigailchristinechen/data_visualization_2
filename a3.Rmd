@@ -8,7 +8,7 @@ output:
     toc_float: true
 ---   
 
-##Research Goal
+#Research Goal
 
 "The Nobel Prize is a set of annual international awards bestowed in several categories by Swedish and Norwegian institutions in recognition of academic, cultural, or scientific advances." - Wikipedia.
 
@@ -39,7 +39,7 @@ The aim of this project is to create a visualization about Nobel Prize Winners a
 #Setting up the environment
 
 ##Libraries  
-```{r setup, include=TRUE}
+```{r setup, include=TRUE, warning=FALSE, message = FALSE}
 library(extrafont)
 library(data.table)
 library(tidytuesdayR)
@@ -65,10 +65,11 @@ library(tidygraph)
 library(plotly)
 library(modelsummary)
 library(tidylo)
+library(ggthemes)
 ```
 
 ##Loading the Data
-```{r, echo=FALSE, message = FALSE, include = TRUE}
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message = FALSE}
 ##Loading the data
 #Nobel Prize Winners
 nobel_winners <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-14/nobel_winners.csv")
@@ -78,12 +79,12 @@ nobel_winner_all_pubs <- readr::read_csv("https://raw.githubusercontent.com/rfor
 ```
 
 
-##Exploring the data
+#Exploring the data
 
 Below is the list of the different variables, their class, and a short description found in the two data sets.
 
 For the Nobel Prize Winners, there are 969 rows and 18 columns. 
-```{r, echo=FALSE, message = FALSE, include = TRUE}
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message = FALSE}
 count_rows <- count(nobel_winners)
 count_cols <- ncol(nobel_winners)
 ```
@@ -108,7 +109,7 @@ count_cols <- ncol(nobel_winners)
 18. **death_country**:	(character)	Death country (if dead)).
 
 For the Nobel Prize Publications, there are 93,394 rows and 11 columns. 
-```{r setup, message = FALSE, include=TRUE}
+```{r, include=TRUE, warning=FALSE, message = FALSE}
 count_rows_win <- count(nobel_winner_all_pubs)
 count_cols_win <- ncol(nobel_winner_all_pubs)
 ```
@@ -125,15 +126,15 @@ count_cols_win <- ncol(nobel_winner_all_pubs)
 28. **is_prize_winning_paper**: (character) Is associated as the Nobel winning paper (yes or no).
 29. **category**: (character) Category/field of study.
 
-##Defining the theme
+#Defining the theme
 
-```{r, echo=FALSE, message = FALSE, include = TRUE}
+```{r, echo=TRUE, include=TRUE, warning=FALSE, message = FALSE}
 ##Defining the theme
 
 theme_nobel <- function(){ 
-    font <- "Calibri"   #assign font family up front
+    font <- "Times New Roman"   #assign font family up front
     
-    theme_bw() %+replace%    #replace elements we want to change
+    theme_wsj() %+replace%    #replace elements we want to change
     
     theme(
       
@@ -157,32 +158,39 @@ theme_nobel <- function(){
       plot.caption = element_text(           #caption
                    family = font,            #font family
                    size = 8,                 #font size
-                   hjust = 0.5),               #right align
+                   hjust = 0.5),             #right align
       
       #axis elements
       axis.text = element_text(              #axis text
                    family = font,            #axis famuly
-                   size = 8),                #font size
+                   size = 10),               #font size
       
       axis.title = element_text(             #axis titles
                    family = font,            #font family
-                   size = 8),               #font size
+                   size = 10),               #font size
     )
 }
 ```
 
 
-##Data Cleaning 
+#Data Cleaning 
 
 To clean the data, I transformed the birth_date column to a year, month, day format. I also did the same for the death_date column. I also added the birth_year column from the birth_date.  I used this to create the age column which is the difference of the prize_year and the birth_year. 
 
-```{r, echo=FALSE, message = FALSE, include = TRUE}
+```{r, echo=FALSE, include=FALSE, warning=FALSE, message = FALSE}
 #Checking the formats
 str(nobel_winners)
 str(nobel_winner_all_pubs)
 ```
 
-```{r setup, message = FALSE, include=TRUE}
+```{r, echo=FALSE, include=FALSE, warning=FALSE, message = FALSE}
+#Creating the birth_year and age
+nobel_winners <- nobel_winners[, birth_year := year(birth_date)]
+nobel_winners$birth_year <- as.numeric(nobel_winners$birth_year)
+nobel_winners$age <- nobel_winners$prize_year - nobel_winners$birth_year
+```
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message = FALSE}
 #Transforming to data.table
 nobel_winners <- as.data.table(nobel_winners)
 nobel_winner_all_pubs  <- as.data.table(nobel_winner_all_pubs)
@@ -192,7 +200,7 @@ nobel_winner_all_pubs  <- as.data.table(nobel_winner_all_pubs)
 #nobel_winners <- nobel_winners[, prize_year:= year(prize_year)]
 
 #Adding birth year
-nobel_winners  <- nobel_winners[, birth_year := year(birth_date)]
+nobel_winners$birth_year  <- nobel_winners[, birth_year := year(birth_date)]
 
 #For birth_date
 nobel_winners <- nobel_winners[, birth_date := ymd(birth_date)]
@@ -203,12 +211,40 @@ nobel_winners <- nobel_winners[, death_date := ymd(death_date)]
 #Creating the birth_year and age
 nobel_winners$birth_year <- as.numeric(nobel_winners$birth_year)
 nobel_winners$age <- nobel_winners$prize_year - nobel_winners$birth_year
+
+#nobel_winners$birth_country = as.factor(nobel_winners$birth_country)
 ```
 
-```{r setup, message = FALSE, include=TRUE}
+```{r, echo = FALSE, include=FALSE, warning=FALSE, message = FALSE}
 #checking the formats again
 str(nobel_winners)
 str(nobel_winner_all_pubs)
+```
+
+
+```{r, include=TRUE, warning=FALSE, message = FALSE}
+# # creating new data table of countries to be used for further mapping
+# countries <- nobel_winners[, .(count = .N), by = .(birth_country, prize_year)]
+# 
+# # extracting each country and the year their content added to the Netflix
+# countries <-  countries %>% 
+#   ungroup()%>%
+#   separate_rows(birth_country,sep = ",")%>%
+#   mutate(
+#     birth_country=str_trim(birth_country)
+#   )%>%
+#   group_by(prize_year,birth_country)%>%
+#   summarize(
+#     count=n()
+#   )%>%
+#   ungroup()%>%
+#   filter(birth_country!='NA',birth_country!="" )%>%
+#   arrange(prize_year,desc(count))
+# 
+# 
+# # Create function to drop null values
+# row.has.na <- apply(countries, 1, function(x){any(is.na(x))})
+# sum(row.has.na)
 ```
 
 ##Descriptive Summary
@@ -226,21 +262,21 @@ datasummary((`Category` = category) ~ N + Percent(), data = nobel_winners, title
 36% of the Nobel Prizes awarded went to individuals, while Pairs (34%), Trios (23%) and Groups of 4 (7%).
 ```{r ,echo=FALSE}
 # Data summary for Prize Sharing
-datasummary((`Prize Sharing` = prize_share) ~ N + Percent(), data = nobel_winners, title = "Laureate Prize Sharing Distribution")
+datasummary((`Prize Sharing` = prize_share) ~ N + Percent(), data = nobel_winners, title = "Laureate Prize Sharing Breakdown")
 ```
 
 ### Data summary for Laureate Type
 97% of the Nobel Prizes awarded went to individuals, and the rest went to organizations.
 ```{r ,echo=FALSE}
 # Data summary for Laureate Type
-datasummary((`Laureate Type` = laureate_type) ~ N + Percent(), data = nobel_winners, title = "Laureate Type Share")
+datasummary((`Laureate Type` = laureate_type) ~ N + Percent(), data = nobel_winners, title = "Laureate Type Share Breakdown")
 ```
 
 ### Data summary for Birth Country
 29% of the Nobel Prizes awarded went to individuals born in the USA, followed by those from UK (9%).
 ```{r ,echo=FALSE}
 # Data summary for Birth Country
-datasummary((`Birth Country` = birth_country) ~ N + Percent(), data = nobel_winners, title = "Laureate Birth Country Share")
+datasummary((`Birth Country` = birth_country) ~ N + Percent(), data = nobel_winners, title = "Laureate Birth Country Breakdown")
 ```
 
 ### Data summary for Gender
@@ -261,5 +297,390 @@ datasummary((`Category` = category) ~ N + Percent(), data = nobel_winner_all_pub
 The youngest awardee is 17 years old, and oldest awardee is 90 years old.  On average, the Nobel laureates are around 60 upon awarding.
 ```{r ,echo=FALSE}
 # Data summary for Laureate Age Upon Awarding
-datasummary((`Age` = age) ~ Min + Max + Mean + Median + N , data = nobel_winners, title = "Laureate Age")
+datasummary((`Age` = age) ~ Min + Max + Mean + Median + N , data = nobel_winners, title = "Laureate Age Summary")
+```
 
+
+##Distributions
+### Distribution for Laureate Age Upon Awarding
+```{r ,echo=FALSE, warning = FALSE}
+# Distribution for Laureate Age Upon Awarding
+f1 <- ggplot(data=nobel_winners, aes(x=age)) +
+  geom_bar() +
+  xlab("Age") +
+  ylab("Number of Laureates") +
+  ggtitle("Laureate Age Distribution") +
+  scale_fill_viridis(discrete = T, alpha = 0.9) +
+  theme_nobel()+ scale_colour_wsj("colors6")+
+  theme(legend.position = "top", 
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5), 
+        panel.background = element_rect(fill = NA))
+
+f1
+```
+
+### Distribution for Categories
+```{r ,echo=FALSE}
+# Distribution for Categories
+f2 <- ggplot(data=nobel_winners, aes(x=category)) +
+  geom_bar(fill = "#DAA520", alpha = 0.8) +
+  xlab("Categories") +
+  ylab("Number of Categories") +
+  ggtitle("Nobel Categories Distribution") +
+  scale_fill_viridis(discrete = T, alpha = 0.9) +
+  theme_nobel()+ scale_colour_wsj("colors6")+
+  theme(legend.position = "top", 
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5), 
+        panel.background = element_rect(fill = NA))
+
+f2
+```
+
+### Distribution for Prize Sharing
+```{r ,echo=FALSE}
+# Distribution for Prize Sharing
+f3 <- ggplot(data=nobel_winners, aes(x=prize_share)) +
+  geom_bar() +
+  xlab("# of people") +
+  ylab("Count") +
+  ggtitle("Laureate Prize Sharing Distribution") +
+  scale_fill_viridis(discrete = T, alpha = 0.9) +
+  theme_nobel()+ scale_colour_wsj("colors6")+
+  theme(legend.position = "top", 
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5), 
+        panel.background = element_rect(fill = NA))
+
+f3
+```
+
+### Distribution for Laureate Type
+```{r ,echo=FALSE}
+# Distribution for Laureate Type
+f4 <- ggplot(data=nobel_winners, aes(x=laureate_type)) +
+  geom_bar(fill = "#DAA520", alpha = 0.8) +
+  xlab("Laureate Type") +
+  ylab("Count") +
+  ggtitle("Laureate Type Share Breakdown") +
+  scale_fill_viridis(discrete = T, alpha = 0.9) +
+  theme_nobel()+ scale_colour_wsj("colors6")+
+  theme(legend.position = "top", 
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5), 
+        panel.background = element_rect(fill = NA))
+
+f4
+```
+
+### Distribution for Birth Country 
+```{r ,echo=FALSE}
+#Distribution for Birth Country
+library(data.table)
+options(datatable.optimize = 1)
+ggplot
+
+nobel_winners <- as.data.table(nobel_winners)
+df2 <- nobel_winners[ , (count = .N), by =  .(birth_country)][order(-V1)][head(1:10)]
+
+ggplot(df2, aes(x = birth_country, y = V1)) + 
+  geom_col(, alpha = 0.8) + 
+  xlab("Country") +
+  ylab("Number of contents") +
+  labs(title = "Number of Netflix Content per Country") + 
+  theme(legend.position = "top", 
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5), panel.background = element_rect(fill = NA) ) + 
+  theme_nobel()+ scale_colour_wsj("colors6")
+
+```
+
+### Distribution for Laureate Gender
+```{r ,echo=FALSE}
+# Distribution for Laureate Gender
+f6 <- ggplot(data=nobel_winners, aes(x=gender)) +
+  geom_bar(fill = "#DAA520", alpha = 0.8) +
+  xlab("Gender") +
+  ylab("Number of Laureates") +
+  ggtitle("Laureate Gender Distribution") +
+  scale_fill_viridis(discrete = T, alpha = 0.9) +
+  theme_nobel()+ scale_colour_wsj("colors6")+
+  theme(legend.position = "top", 
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5), 
+        panel.background = element_rect(fill = NA))
+f6
+```
+
+```{r ,echo=FALSE}
+# Distribution for Laureate Publication Categories
+f7 <- ggplot(data=nobel_winner_all_pubs, aes(x=category)) +
+  geom_bar() +
+  xlab("Laureate Publication Categories") +
+  ylab("Number of Publications") +
+  ggtitle("Laureate Publication Categories Distribution") +
+  scale_fill_viridis(discrete = T, alpha = 0.9) +
+  theme_nobel()+ scale_colour_wsj("colors6")+
+  theme(legend.position = "top", 
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5), 
+        panel.background = element_rect(fill = NA))
+f7
+```
+
+#How has the awarding of Nobel Prize Changed since 1901 til now?
+Here we can see that when the Nobel Prize Started, usually 1-2 awards was given per category.  During 1930's to 1960's we started seeing more awards given , around 2-3 awards in the various categories. And for the early 2000's we started seeing even more awards, around 4-5 awards.
+```{r, warning = FALSE, message=FALSE, fig.show='animate' , animation.hook="gifski"}
+#How has the awarding of Nobel Price Changed since 1901?
+nobel_winners <- as.data.table(nobel_winners)
+
+a1<-ggplot(nobel_winners[, .(count = .N), by = .(category, prize_year)], aes(x=prize_year, y=count, group = category, color=category)) +
+  geom_line() +
+  geom_point() +
+  scale_color_viridis(discrete = TRUE) +
+  ggtitle("Nobel Prize Per Year") +
+  ylab("Number of Awards") +
+  xlab("Prize") +
+  labs(color = "Category", group = "Category") +
+  theme(legend.position = "top", panel.background = element_rect(fill = NA),
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5) ) +
+  transition_reveal(prize_year) +
+  theme_nobel()+scale_colour_wsj("colors6") +
+  enter_grow() +
+  enter_fade() +
+  ease_aes("back-in")
+
+anim_save(filename="a1.gif", animation=a1, "/Users/abigailchristinechen/data_visualization_2")
+```
+
+![](a1.gif)
+#How has the awarding of Nobel Price for Medicine Changed since 1901?
+We can see that some Nobel Prizes were not awarded due to the World War I (1914-1918). During the 1940's the awards and development for medicine started picking up especially for the early 2000's.
+
+```{r, warning = FALSE, message=FALSE, fig.show='animate' , animation.hook="gifski"}
+nobel_winners <- as.data.table(nobel_winners)
+a2<-ggplot(nobel_winners[category == "Medicine"][, .(count = .N), by = .(category, prize_year)], aes(x=prize_year, y=count, group = category, color=category)) +
+  geom_line() +
+  geom_point() +
+  scale_color_viridis(discrete = TRUE) +
+  ggtitle("Nobel Prize (Medicine) Per Year") +
+  ylab("Number of Awards") +
+  xlab("Laureates in Medicine per year") +
+  labs(color = "Category", group = "Category") +
+  theme(legend.position = "top", panel.background = element_rect(fill = NA),
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5) ) +
+  transition_reveal(prize_year) +
+  theme_nobel()+scale_colour_wsj("colors6") +
+  enter_grow() +
+  enter_fade() +
+  ease_aes("back-in")
+
+anim_save(filename="a2.gif", animation=a2, "/Users/abigailchristinechen/data_visualization_2")
+```
+![](a2.gif)
+
+#How has the awarding of Nobel Price for Chemistry Changed since 1901?
+We can see that some Nobel Prizes were not awarded due to the World War I (1914-1918). During the 1920's to 1970's the awards and development for medicine are stable receiving 2-3 awards. In the early 2000's, we've been seeing years with 5 awards.
+
+```{r, warning = FALSE, message=FALSE, fig.show='animate' , animation.hook="gifski"}
+nobel_winners <- as.data.table(nobel_winners)
+a3<-ggplot(nobel_winners[category == "Chemistry"][, .(count = .N), by = .(category, prize_year)], aes(x=prize_year, y=count, group = category, color=category)) +
+  geom_line() +
+  geom_point() +
+  scale_color_viridis(discrete = TRUE) +
+  ggtitle("Nobel Prize (Chemistry) Per Year") +
+  ylab("Number of Awards") +
+  xlab("Laureates in Chemistry per year") +
+  labs(color = "Category", group = "Category") +
+  theme(legend.position = "top", panel.background = element_rect(fill = NA),
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5) ) +
+  transition_reveal(prize_year) +
+  theme_nobel()+scale_colour_wsj("colors6") +
+  enter_grow() +
+  enter_fade() +
+  ease_aes("back-in")
+
+anim_save(filename="a3.gif", animation=a3, "/Users/abigailchristinechen/data_visualization_2")
+```
+![](a3.gif)
+#How has the awarding of Nobel Price for Physics Changed since 1901?
+We can see that after the World War 2, the yearly awards for the field of Physics increased to 3, and like other fields picked up on the late 2000's too. 
+```{r, warning = FALSE, message=FALSE, fig.show='animate' , animation.hook="gifski"}
+nobel_winners <- as.data.table(nobel_winners)
+a4<-ggplot(nobel_winners[category == "Physics"][, .(count = .N), by = .(category, prize_year)], aes(x=prize_year, y=count, group = category, color=category)) +
+  geom_line() +
+  geom_point() +
+  scale_color_viridis(discrete = TRUE) +
+  ggtitle("Nobel Prize (Physics) Per Year") +
+  ylab("Number of Awards") +
+  xlab("Laureates in Physics per year") +
+  labs(color = "Category", group = "Category") +
+  theme(legend.position = "top", panel.background = element_rect(fill = NA),
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5) ) +
+  transition_reveal(prize_year) +
+  theme_nobel()+scale_colour_wsj("colors6") +
+  enter_grow() +
+  enter_fade() +
+  ease_aes("back-in")
+
+anim_save(filename="a4.gif", animation=a4, "/Users/abigailchristinechen/data_visualization_2")
+```
+
+![](a4.gif)
+
+#How has the awarding of Nobel Price for Peace Changed since 1901?
+Here, we can see that the period after the World War 1, received more constant Peace awards.  The same also happened after World War 2, where Peace awards were awarded more.
+```{r, warning = FALSE, message=FALSE, fig.show='animate' , animation.hook="gifski"}
+nobel_winners <- as.data.table(nobel_winners)
+a5<-ggplot(nobel_winners[category == "Peace"][, .(count = .N), by = .(category, prize_year)], aes(x=prize_year, y=count, group = category, color=category)) +
+  geom_line() +
+  geom_point() +
+  scale_color_viridis(discrete = TRUE) +
+  ggtitle("Nobel Prize (Peace) Per Year") +
+  ylab("Number of Awards") +
+  xlab("Laureates in Peace per year") +
+  labs(color = "Category", group = "Category") +
+  theme(legend.position = "top", panel.background = element_rect(fill = NA),
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5) ) +
+  transition_reveal(prize_year) +
+  theme_nobel()+scale_colour_wsj("colors6") +
+  enter_grow() +
+  enter_fade() +
+  ease_aes("back-in")
+
+anim_save(filename="a5.gif", animation=a5, "/Users/abigailchristinechen/data_visualization_2")
+```
+
+![](a5.gif)
+
+#How has the awarding of Nobel Price for Literature Changed since 1901?
+In Literature, we can see that there were many consecutive years where 1 award was just given.  And then there were just 4 years when 5 awards were given at the same time. 
+```{r, warning = FALSE, message=FALSE, fig.show='animate' , animation.hook="gifski"}
+nobel_winners <- as.data.table(nobel_winners)
+a6<-ggplot(nobel_winners[category == "Literature"][, .(count = .N), by = .(category, prize_year)], aes(x=prize_year, y=count, group = category, color=category)) +
+  geom_line() +
+  geom_point() +
+  scale_color_viridis(discrete = TRUE) +
+  ggtitle("Nobel Prize (Literature) Per Year") +
+  ylab("Number of Awards") +
+  xlab("Laureates in Literature per year") +
+  labs(color = "Category", group = "Category") +
+  theme(legend.position = "top", panel.background = element_rect(fill = NA),
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5) ) +
+  transition_reveal(prize_year) +
+  theme_nobel()+scale_colour_wsj("colors6") +
+  enter_grow() +
+  enter_fade() +
+  ease_aes("back-in")
+
+anim_save(filename="a6.gif", animation=a6, "/Users/abigailchristinechen/data_visualization_2")
+```
+
+![](a6.gif)
+
+
+##How has the awarding of Nobel Price for Economics Changed since 1901?
+Here, we can see that the award for economics started around 1970's. Then, the awards for Economics started picking up to 3 awards per year during the 1990's.
+```{r, warning = FALSE, message=FALSE, fig.show='animate' , animation.hook="gifski"}
+nobel_winners <- as.data.table(nobel_winners)
+a7<-ggplot(nobel_winners[category == "Economics"][, .(count = .N), by = .(category, prize_year)], aes(x=prize_year, y=count, group = category, color=category)) +
+  geom_line() +
+  geom_point() +
+  scale_color_viridis(discrete = TRUE) +
+  ggtitle("Nobel Prize (Economics) Per Year") +
+  ylab("Number of Awards") +
+  xlab("Laureates in Economics per year") +
+  labs(color = "Category", group = "Category") +
+  theme(legend.position = "top", panel.background = element_rect(fill = NA),
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5) ) +
+  transition_reveal(prize_year) +
+  theme_nobel()+scale_colour_wsj("colors6") +
+  enter_grow() +
+  enter_fade() +
+  ease_aes("back-in")
+
+anim_save(filename="a7.gif", animation=a7, "/Users/abigailchristinechen/data_visualization_2")
+```
+
+![](a7.gif)
+
+## How has the Nobel Laureate age changed across the years?
+Here we can see that the average age of the Laureates ranges from 50-60 years old during the 1900's-1960's. After that the age of Laureates got higher from 60-75 years old.
+```{r message=FALSE, warning=FALSE}
+#How has the average age changed across the years?
+a8 <- ggplot(nobel_winners, aes(prize_year, age, group = prize_year, fill = age )) +
+  xlab("Prize year") +
+  ylab("Age") +
+  labs(fill = "Age", group = "Prize Year", title = "Laureate Age across the Years") +
+  geom_boxplot() +
+  theme(legend.position = "top", panel.background = element_rect(fill = NA),
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5) ) +
+  scale_fill_viridis() +
+  transition_reveal(prize_year)+ 
+ theme_nobel()+scale_colour_wsj("colors6") +
+  enter_grow() +
+  enter_fade() +
+  ease_aes("back-in")
+
+anim_save(filename="a8.gif", animation=a8, "/Users/abigailchristinechen/data_visualization_2")
+```
+![](a8.gif)
+##How many females are awarded across the years?
+```{r message=FALSE, warning=FALSE}
+#How has the average age changed across the years?
+a9 <- ggplot(nobel_winners[gender == "female"][, .(count = .N), by = .(gender, prize_year)], aes(x=prize_year, y=count, group = gender)) +
+  geom_point() +
+  ggtitle("Male Laureates Per Year") +
+  ylab("Number of Awards") +
+  xlab("Year") +
+  labs(color = "Gender", group = "Gender") +
+  theme(legend.position = "top", panel.background = element_rect(fill = NA),
+        panel.border = element_blank(), axis.text=element_text(size=8), 
+        plot.title = element_text(size = 12L, face = "bold", hjust = 0.5) ) +
+  theme_nobel()+scale_colour_wsj("colors6") 
+
+a9
+```
+
+##When did each countries received the most awards?
+The below map shows that based on the available data in 2008, United States was the only content contributor to the Netflix, As the time passes other countries across the globe joined Netflix.
+
+```{r message=FALSE, warning=FALSE}
+# changing  to numeric
+df2$V1 <- as.numeric(df2$V1 )
+
+# creating hover 
+df2<- df2 %>% mutate(hover = paste0(birth_country, "\n", V1))
+
+# creating type of map
+map1 <- list(
+  projection = list(
+    type = 'natural earth'
+  ),
+  showland = TRUE,
+  landcolor = toRGB("#F9F9F9")
+)
+
+# ploting the map
+plot_geo(df2, 
+         locationmode = "ISO-3",
+         frame = ~V1) %>% 
+  add_trace(locations = ~iso3,
+            z = ~count,
+            zmin = 1,
+            zmax = max(df2$V1),
+            color = ~V1,
+            text = ~hover,
+            hoverinfo = "text") %>% 
+  layout(geo = map1,
+         title = "Countries with most Awards")
+```
