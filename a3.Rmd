@@ -68,7 +68,7 @@ library(tidylo)
 ```
 
 ##Loading the Data
-```{r setup, include=TRUE}
+```{r, echo=FALSE, message = FALSE, include = TRUE}
 ##Loading the data
 #Nobel Prize Winners
 nobel_winners <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-14/nobel_winners.csv")
@@ -83,7 +83,7 @@ nobel_winner_all_pubs <- readr::read_csv("https://raw.githubusercontent.com/rfor
 Below is the list of the different variables, their class, and a short description found in the two data sets.
 
 For the Nobel Prize Winners, there are 969 rows and 18 columns. 
-```{r setup, include=TRUE}
+```{r, echo=FALSE, message = FALSE, include = TRUE}
 count_rows <- count(nobel_winners)
 count_cols <- ncol(nobel_winners)
 ```
@@ -108,7 +108,7 @@ count_cols <- ncol(nobel_winners)
 18. **death_country**:	(character)	Death country (if dead)).
 
 For the Nobel Prize Publications, there are 93,394 rows and 11 columns. 
-```{r setup, include=TRUE}
+```{r setup, message = FALSE, include=TRUE}
 count_rows_win <- count(nobel_winner_all_pubs)
 count_cols_win <- ncol(nobel_winner_all_pubs)
 ```
@@ -127,7 +127,7 @@ count_cols_win <- ncol(nobel_winner_all_pubs)
 
 ##Defining the theme
 
-```{r setup, include=TRUE}
+```{r, echo=FALSE, message = FALSE, include = TRUE}
 ##Defining the theme
 
 theme_nobel <- function(){ 
@@ -172,22 +172,94 @@ theme_nobel <- function(){
 ```
 
 
+##Data Cleaning 
 
+To clean the data, I transformed the birth_date column to a year, month, day format. I also did the same for the death_date column. I also added the birth_year column from the birth_date.  I used this to create the age column which is the difference of the prize_year and the birth_year. 
 
+```{r, echo=FALSE, message = FALSE, include = TRUE}
+#Checking the formats
+str(nobel_winners)
+str(nobel_winner_all_pubs)
+```
 
-Data Cleaning
-Creating New Table
-Descriptive Summary
-Distributions
-Mian Tasks
-1- How have the production of Movies and TV shows changed across years?
-2- How has the average movie duration changed across the decades?
-3- How do movies duration change based on the target audience?
-4- How are the genres clustered?
-5- When did each countries’ content add to the Netflix?
-Conclusion
-Appendix
-References
-Introduction
-The aim of this project is to utilize Rstudio for data visualization purposes. Netflix titles from Tidy Tuesday is used for this project, which can be found here. In this project I will be exploring the Movies and TV shows in Netflix.
+```{r setup, message = FALSE, include=TRUE}
+#Transforming to data.table
+nobel_winners <- as.data.table(nobel_winners)
+nobel_winner_all_pubs  <- as.data.table(nobel_winner_all_pubs)
+
+#Transforming to date format
+##For prize_year
+#nobel_winners <- nobel_winners[, prize_year:= year(prize_year)]
+
+#Adding birth year
+nobel_winners  <- nobel_winners[, birth_year := year(birth_date)]
+
+#For birth_date
+nobel_winners <- nobel_winners[, birth_date := ymd(birth_date)]
+
+#For death_date
+nobel_winners <- nobel_winners[, death_date := ymd(death_date)]
+
+#Creating the birth_year and age
+nobel_winners$birth_year <- as.numeric(nobel_winners$birth_year)
+nobel_winners$age <- nobel_winners$prize_year - nobel_winners$birth_year
+```
+
+```{r setup, message = FALSE, include=TRUE}
+#checking the formats again
+str(nobel_winners)
+str(nobel_winner_all_pubs)
+```
+
+##Descriptive Summary
+
+### Data summary for Categories
+23.4% of the Nobel Prizes awarded went to Medicine. Followed by Physics (22.9%), Chemistry (20%), Peace (13%), Literature (12%),and  Economics (5%).
+
+```{r ,echo=FALSE}
+#Data summary for Categories
+datasummary((`Category` = category) ~ N + Percent(), data = nobel_winners, title = "Nobel Prize Category Breakdown")
+
+```
+
+### Data summary for Prize Sharing
+36% of the Nobel Prizes awarded went to individuals, while Pairs (34%), Trios (23%) and Groups of 4 (7%).
+```{r ,echo=FALSE}
+# Data summary for Prize Sharing
+datasummary((`Prize Sharing` = prize_share) ~ N + Percent(), data = nobel_winners, title = "Laureate Prize Sharing Distribution")
+```
+
+### Data summary for Laureate Type
+97% of the Nobel Prizes awarded went to individuals, and the rest went to organizations.
+```{r ,echo=FALSE}
+# Data summary for Laureate Type
+datasummary((`Laureate Type` = laureate_type) ~ N + Percent(), data = nobel_winners, title = "Laureate Type Share")
+```
+
+### Data summary for Birth Country
+29% of the Nobel Prizes awarded went to individuals born in the USA, followed by those from UK (9%).
+```{r ,echo=FALSE}
+# Data summary for Birth Country
+datasummary((`Birth Country` = birth_country) ~ N + Percent(), data = nobel_winners, title = "Laureate Birth Country Share")
+```
+
+### Data summary for Gender
+92% of the Nobel Prizes awarded went to males, 5% to females and the rest to organizations.
+```{r ,echo=FALSE}
+# Data summary for Gender
+datasummary((`Gender` = gender) ~ N + Percent(), data = nobel_winners, title = "Laureate Gender Share")
+```
+
+### Data summary for Laureate Publication Categories
+42,600 Publications were published in the field of chemistry(46%), 29,200 for Medicine (31%), and 21,500 for Physics(23%). 
+```{r ,echo=FALSE}
+# Data summary for Laureate Publication Categories
+datasummary((`Category` = category) ~ N + Percent(), data = nobel_winner_all_pubs, title = "Publication Category Distribution")
+```
+
+### Data summary for Laureate Age Upon Awarding
+The youngest awardee is 17 years old, and oldest awardee is 90 years old.  On average, the Nobel laureates are around 60 upon awarding.
+```{r ,echo=FALSE}
+# Data summary for Laureate Age Upon Awarding
+datasummary((`Age` = age) ~ Min + Max + Mean + Median + N , data = nobel_winners, title = "Laureate Age")
 
